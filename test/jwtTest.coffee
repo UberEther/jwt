@@ -4,6 +4,7 @@ JWT = require "../lib"
 describe "JWT", () ->
 
     jwk = new JWT.JWK
+    pubJwk = new JWT.JWK
     before (done) ->
         jwk.manualLoadJwkAsync keys: [
             kty: "EC"
@@ -12,6 +13,13 @@ describe "JWT", () ->
             x: "uiOfViX69jYwnygrkPkuM0XqUlvW65WEs_7rgT3eaak"
             y: "v8S-ifVFkNLoe1TSUrNFQVj6jRbK1L8V-eZa-ngsZLM"
             d: "dI5TRpZrVLpTr_xxYK-n8FgTBpe5Uer-8QgHu5gx9Ds"
+        ]
+        .then () -> pubJwk.manualLoadJwkAsync keys: [
+            kty: "EC"
+            kid: "testKey1"
+            crv: "P-256"
+            x: "uiOfViX69jYwnygrkPkuM0XqUlvW65WEs_7rgT3eaak"
+            y: "v8S-ifVFkNLoe1TSUrNFQVj6jRbK1L8V-eZa-ngsZLM"
         ]
         .then () -> done()
         .catch done
@@ -156,5 +164,17 @@ describe "JWT", () ->
         expect () -> t.generateTokenAsync {}, encryptionKey: "x"
         .to.throw "Encryption key not allowed"
 
-
+    it "should properly use separate public and private keystores", (done) ->
+        t = new JWT jwk: pubJwk, pvtJwk: jwk, signingAllowed: "req", encryptionAllowed: "req"
+        claims = test: "ABCDE"
+        t.generateTokenAsync claims,
+            signingKey: "testKey1"
+            encryptionKey: "testKey1"
+        .then (rv) -> t.parseTokenAsync rv.token
+        .then (rv) ->
+            expect(rv.rawDecryptResult.key.toObject(true).d).to.be.ok
+            # todo: Implement this once node-jose #5 is implemented - see https://github.com/cisco/node-jose/issues/5
+            #expect(rv.rawVerifyResult.key.toObject(true).d).to.not.be.ok
+        .then () -> done()
+        .catch done
 
