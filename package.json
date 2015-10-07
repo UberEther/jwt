@@ -1,0 +1,37 @@
+{
+  "name": "uberether-jwt",
+  "version": "0.1.0",
+  "description": "Class for generating, parsing, and validating JWT tokens",
+  "main": "lib",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UberEther/jwt.git"
+  },
+  "author": {
+    "name": "Michael Samblanet",
+    "email": "samblanetm@uberether.com",
+    "url": "http://github.com/msamblanet/"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/UberEther/jwt/issues"
+  },
+  "homepage": "https://github.com/UberEther/jwt",
+  "scripts": {
+    "test": "mocha",
+    "test-cov": "istanbul cover --config test/istanbul.yml node_modules/mocha/bin/_mocha"
+  },
+  "dependencies": {
+    "bluebird": "^2.9.13",
+    "coffee-script": "^1.9.2",
+    "uberether-jwk": "^0.2.0"
+  },
+
+  "devDependencies": {
+    "mocha": "^2.3.0",
+    "chai": "^3.2.0",
+    "rewire": "^2.3.4",
+    "istanbul": "^0.3.5",
+    "coffee-coverage": "^0.6.3"
+  }
+}
