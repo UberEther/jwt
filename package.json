@@ -24,7 +24,9 @@
   "dependencies": {
     "bluebird": "^2.9.13",
     "coffee-script": "^1.9.2",
-    "uberether-jwk": "^0.2.0"
+    "uberether-jwk": "^0.3.0",
+    "node-uuid": "^1.4.2",
+    "clone": "^1.0.2"
   },
 
   "devDependencies": {

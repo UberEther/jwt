@@ -1,43 +1,42 @@
 Promise = require "bluebird"
 _JWK = require "uberether-jwk"
+_Validator = require "./validator"
 
 legalAllowedValues = ["req", "opt", "never"]
 
 class JWT
     constructor: (options = {}) ->
-        @jwk = options.jwk || new JWT.JWK options.jwkOptions
-        @pvtJwk = options.pvtJwk || (options.pvtJwkOptions && new JWT.JWK options.pvtJwkOptions) || @jwk
-
+        if !options.schema then throw new Error "options.schema is required"
 
         @signingAllowed = options.signingAllowed || "req"
         @encryptionAllowed = options.encryptionAllowed || "never"
-
         if legalAllowedValues.indexOf(@signingAllowed) == -1 then throw new Error "Illegal value for signingAllowed"
         if legalAllowedValues.indexOf(@encryptionAllowed) == -1 then throw new Error "Illegal value for encryptionAllowed"
         if @signingAllowed == "never" && @encryptionAllowed == "never" then throw new Error "Cannot specify never for both signing and encryption"
 
+        # Note: istanbul is reporting these lines as uncovered BUT everything I can do says they are covered
+        # Not sure what is going on here...
+        if @signingAllowed != "never" && !options.schema.signingHeader then throw new Error "options.schema.signingHeader is required"
+        if @encryptionAllowed != "never" && !options.schema.encryptionHeader then throw new Error "options.schema.encryptionHeader is required"
+        if !options.schema then throw new Error "options.schema.claims is required"
+
+        @jwk = options.jwk || new JWT.JWK options.jwkOptions
+        @pvtJwk = options.pvtJwk || (options.pvtJwkOptions && new JWT.JWK options.pvtJwkOptions) || @jwk
+
+        @validator = options.validator || new JWT.Validator options.schema
+
+
+
     ##################################
     ### Token Parsing
     ##################################
-
-    validateEncryptionHeader: (x) ->
-        # todo: IMPLEMENT ME
-        return x.header
-
-    validateSigningHeader: (x) ->
-        # todo: IMPLEMENT ME
-        return x.header
-
-    validateClaims: (x) ->
-        # todo: IMPLEMENT ME
-        return x
 
     verifyAsync: (token, rv) ->
         if @signingAllowed == "never" then throw new Error "Token signed but signing not allowed"
         Promise.bind @
         .then () -> @jwk.verifySignatureAsync token
         .then (x) ->
-            rv.signingHeader = @validateSigningHeader x
+            rv.signingHeader = @validator.validate "signingHeader", x.header
             rv.rawVerifyResult = x
             return x.payload
 
@@ -46,7 +45,7 @@ class JWT
         Promise.bind @
         .then () -> @pvtJwk.decryptAsync token
         .then (x) ->
-            rv.encryptionHeader = @validateEncryptionHeader x
+            rv.encryptionHeader = @validator.validate "encryptionHeader", x.header
             rv.rawDecryptResult = x
 
             if rv.encryptionHeader.cty?.toUpperCase() == "JWT" then @verifyAsync x.plaintext.toString("utf8"), rv
@@ -66,8 +65,7 @@ class JWT
             if @encryptionAllowed == "req" && !rv.encryptionHeader then throw new Error "Token not encrypted"
 
             claims = JSON.parse payload.toString "utf8"
-            @validateClaims claims
-            rv.claims = claims
+            rv.claims = @validator.validate "claims", claims
 
             return rv
 
@@ -83,7 +81,7 @@ class JWT
         if @encryptionAllowed == "never" && options.encryptionKey then throw new Error "Encryption key not allowed"
 
         rv = {}
-        Promise.bind @, JSON.stringify @generateClaims claims
+        Promise.bind @, JSON.stringify @validator.generate "claims", claims
         .then (payload) ->
             return payload if !options.signingKey
             rv.signingOptions = @generateSigningOptions options
@@ -97,28 +95,27 @@ class JWT
             rv.token = payload
             return rv
 
-    generateClaims: (claims, options) ->
-        # todo: IMPLEMENT ME
-        return claims
-
     generateSigningOptions: (options) ->
         # todo: IMPLEMENT ME
         return {
             format: "compact"
-            fields: {}
+            fields: @validator.generate "signingHeader", options.signingHeader || {}
         }
 
     generateEncryptionOptions: (options) ->
         # todo: IMPLEMENT ME
         rv = {
             format: "compact"
-            fields: {}
+            fields: @validator.generate "signingHeader", options.signingHeader || {}
         }
 
         if options.signingKey then rv.fields.cty = "JWT"
 
         return rv
 
+
+
 JWT.JWK = _JWK
+JWT.Validator = _Validator
 
 module.exports = JWT

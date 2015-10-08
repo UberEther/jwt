@@ -3,30 +3,31 @@ JWT = require "../lib"
 
 describe "JWT", () ->
 
-    jwk = new JWT.JWK
-    pubJwk = new JWT.JWK
-    before (done) ->
-        jwk.manualLoadJwkAsync keys: [
-            kty: "EC"
-            kid: "testKey1"
-            crv: "P-256"
-            x: "uiOfViX69jYwnygrkPkuM0XqUlvW65WEs_7rgT3eaak"
-            y: "v8S-ifVFkNLoe1TSUrNFQVj6jRbK1L8V-eZa-ngsZLM"
-            d: "dI5TRpZrVLpTr_xxYK-n8FgTBpe5Uer-8QgHu5gx9Ds"
-        ]
-        .then () -> pubJwk.manualLoadJwkAsync keys: [
-            kty: "EC"
-            kid: "testKey1"
-            crv: "P-256"
-            x: "uiOfViX69jYwnygrkPkuM0XqUlvW65WEs_7rgT3eaak"
-            y: "v8S-ifVFkNLoe1TSUrNFQVj6jRbK1L8V-eZa-ngsZLM"
-        ]
-        .then () -> done()
-        .catch done
+    jwk = new JWT.JWK jwk: keys: [
+        kty: "EC"
+        kid: "testKey1"
+        crv: "P-256"
+        x: "uiOfViX69jYwnygrkPkuM0XqUlvW65WEs_7rgT3eaak"
+        y: "v8S-ifVFkNLoe1TSUrNFQVj6jRbK1L8V-eZa-ngsZLM"
+        d: "dI5TRpZrVLpTr_xxYK-n8FgTBpe5Uer-8QgHu5gx9Ds"
+    ]
+
+    pubJwk = new JWT.JWK jwk: keys: [
+        kty: "EC"
+        kid: "testKey1"
+        crv: "P-256"
+        x: "uiOfViX69jYwnygrkPkuM0XqUlvW65WEs_7rgT3eaak"
+        y: "v8S-ifVFkNLoe1TSUrNFQVj6jRbK1L8V-eZa-ngsZLM"
+    ]
+
+    schema =
+        signingHeader: allowAny: true
+        encryptionHeader: allowAny: true
+        claims: allowAny: true
 
     describe "Should round-trip", () ->
         it "sign and encrypt", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "req"
+            t = new JWT jwk: jwk, schema: schema, signingAllowed: "req", encryptionAllowed: "req"
             claims = test: "ABCDE"
             t.generateTokenAsync claims,
                 signingKey: "testKey1"
@@ -49,7 +50,7 @@ describe "JWT", () ->
             .catch done
 
         it "sign only", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "never"
+            t = new JWT jwk: jwk, schema: schema, signingAllowed: "req", encryptionAllowed: "never"
             claims = test: "ABCDE"
             t.generateTokenAsync claims,
                 signingKey: "testKey1"
@@ -70,7 +71,7 @@ describe "JWT", () ->
             .catch done
 
         it "encrypt only", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "never", encryptionAllowed: "req"
+            t = new JWT jwk: jwk, schema: schema, signingAllowed: "never", encryptionAllowed: "req"
             claims = test: "ABCDE"
             t.generateTokenAsync claims,
                 encryptionKey: "testKey1"
@@ -92,37 +93,37 @@ describe "JWT", () ->
 
     describe "constructor options", () ->
         it "should default correctly", () ->
-            t = new JWT
+            t = new JWT schema: schema
             expect(t.jwk).to.equal(t.pvtJwk)
             expect(t.signingAllowed).to.equal("req")
             expect(t.encryptionAllowed).to.equal("never")
 
         it "should require signing or encryption", () ->
-            expect () -> new JWT signingAllowed: "never", encryptionAllowed: "never"
+            expect () -> new JWT schema: schema, signingAllowed: "never", encryptionAllowed: "never"
             .to.throw "Cannot specify never for both signing and encryption"
 
         it "should validate encryptionAllowed", () ->
-            expect () -> new JWT signingAllowed: "xxx", encryptionAllowed: "never"
+            expect () -> new JWT schema: schema, signingAllowed: "xxx", encryptionAllowed: "never"
             .to.throw "Illegal value for signingAllowed"
 
         it "should validate signingAllowed", () ->
-            expect () -> new JWT signingAllowed: "never", encryptionAllowed: "xxx"
+            expect () -> new JWT schema: schema, signingAllowed: "never", encryptionAllowed: "xxx"
             .to.throw "Illegal value for encryptionAllowed"
 
     describe "parsing validation of alogrithms", () ->
         it "should fail on verifyAsync if signing is not allowed", () ->
-            t = new JWT signingAllowed: "never", encryptionAllowed: "req"
+            t = new JWT schema: schema, signingAllowed: "never", encryptionAllowed: "req"
             expect () -> t.verifyAsync()
             .to.throw "Token signed but signing not allowed"
 
         it "should fail on decryptAsync if encryption is not allowed", () ->
-            t = new JWT signingAllowed: "req", encryptionAllowed: "never"
+            t = new JWT schema: schema, signingAllowed: "req", encryptionAllowed: "never"
             expect () -> t.decryptAsync()
             .to.throw "Token encrypted but encryption not allowed"
 
         it "should fail if unencrypted token is parsed when encryption required", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "opt"
-            t2 = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "req"
+            t = new JWT jwk: jwk, schema: schema, signingAllowed: "req", encryptionAllowed: "opt"
+            t2 = new JWT jwk: jwk, schema: schema, signingAllowed: "req", encryptionAllowed: "req"
 
             claims = test: "ABCDE"
             t.generateTokenAsync claims, signingKey: "testKey1"
@@ -133,8 +134,8 @@ describe "JWT", () ->
                 else done err
 
         it "should fail if unsigned token is parsed when signature required", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "opt", encryptionAllowed: "req"
-            t2 = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "req"
+            t = new JWT jwk: jwk, schema: schema, signingAllowed: "opt", encryptionAllowed: "req"
+            t2 = new JWT jwk: jwk, schema: schema, signingAllowed: "req", encryptionAllowed: "req"
 
             claims = test: "ABCDE"
             t.generateTokenAsync claims, encryptionKey: "testKey1"
@@ -145,7 +146,7 @@ describe "JWT", () ->
                 else done err
 
     describe "should validate generation options", () ->
-        t = new JWT signingAllowed: "req", encryptionAllowed: "req"
+        t = new JWT schema: schema, signingAllowed: "req", encryptionAllowed: "req"
 
         expect () -> t.generateTokenAsync {}, {}
         .to.throw "Must specify either signing or encryption key"
@@ -156,16 +157,16 @@ describe "JWT", () ->
         expect () -> t.generateTokenAsync {}, encryptionKey: "x"
         .to.throw "Signing key required"
 
-        t = new JWT signingAllowed: "never", encryptionAllowed: "opt"
+        t = new JWT schema: schema, signingAllowed: "never", encryptionAllowed: "opt"
         expect () -> t.generateTokenAsync {}, signingKey: "x"
         .to.throw "Signing key not allowed"
 
-        t = new JWT signingAllowed: "opt", encryptionAllowed: "never"
+        t = new JWT schema: schema, signingAllowed: "opt", encryptionAllowed: "never"
         expect () -> t.generateTokenAsync {}, encryptionKey: "x"
         .to.throw "Encryption key not allowed"
 
     it "should properly use separate public and private keystores", (done) ->
-        t = new JWT jwk: pubJwk, pvtJwk: jwk, signingAllowed: "req", encryptionAllowed: "req"
+        t = new JWT jwk: pubJwk, pvtJwk: jwk, schema: schema, signingAllowed: "req", encryptionAllowed: "req"
         claims = test: "ABCDE"
         t.generateTokenAsync claims,
             signingKey: "testKey1"
@@ -178,3 +179,50 @@ describe "JWT", () ->
         .then () -> done()
         .catch done
 
+    describe "constructor schema verification", () ->
+        it "should fail without a schema", () ->
+            expect () -> new JWT
+            .to.throw "options.schema is required"
+
+        it "should fail without a claims schema", () ->
+            expect () -> new JWT
+                signingAllowed: "req"
+                encryptionAllowed: "req"
+                schema:
+                    signingHeader: {}
+                    encryptionHeader: {}
+            .to.throw "options.schema.claims is required"
+
+        it "should fail without an encryption header if encryption is enabled", () ->
+            expect () -> new JWT
+                signingAllowed: "req"
+                encryptionAllowed: "req"
+                schema:
+                    signingHeader: {}
+                    claims: {}
+            .to.throw "options.schema.encryptionHeader is required"
+
+        it "should succeed without a encryption header if encryption is disabled", () ->
+            new JWT
+                signingAllowed: "req"
+                encryptionAllowed: "never"
+                schema:
+                    signingHeader: {}
+                    claims: {}
+
+        it "should fail without a signing header if signing is enabled", () ->
+            expect () -> new JWT
+                signingAllowed: "req"
+                encryptionAllowed: "req"
+                schema:
+                    encryptionHeader: {}
+                    claims: {}
+            .to.throw "options.schema.signingHeader is required"
+
+        it "should succeed without a signing header if signing is disabled", () ->
+            new JWT
+                signingAllowed: "never"
+                encryptionAllowed: "req"
+                schema:
+                    encryptionHeader: {}
+                    claims: {}

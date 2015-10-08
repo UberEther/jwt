@@ -9,7 +9,7 @@
 
 This library provides a class for generating, parsing, and validating JWT tokens.  It uses [uberether-jwk](https://github.com/UberEther/jwk.git) for key management - that library provides options for loading local keys and/or loading them from URLs with periodic refreshes.
 
-Asynchronous methods are based on [Bluebird](https://github.com/petkaantonov/bluebird) promises.
+Asynchronous methods are based on [Bluebird](https://github.com/petkaantonov/bluebird) promises.  If you require callbacks, you can use the [Bluebird nodeify method](https://github.com/petkaantonov/bluebird/blob/master/API.md#nodeifyfunction-callback--object-options---promise).  For example: ```foo.somethingTharReturnsPromise().nodeify(callback);```
 
 # EXAMPLES:
 
