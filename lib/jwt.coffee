@@ -1,6 +1,11 @@
 Promise = require "bluebird"
 _JWK = require "uberether-jwk"
-_generateValidator = require "./generateValidator"
+registerDefaultFieldTypes = require "./registerDefaultFieldTypes"
+_generateValidator = require "uberether-object-validator"
+
+# Ensure we register the JWT default types with our choice of validator
+# If the user provides their own, they are on their own...
+registerDefaultFieldTypes require "uberether-object-validator/lib/defaultFieldTypes"
 
 legalAllowedValues = ["req", "opt", "never"]
 
