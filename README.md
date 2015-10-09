@@ -29,7 +29,18 @@ Asynchronous methods are based on [Bluebird](https://github.com/petkaantonov/blu
 the instance of uberether-jwk used by the JWT library.
 
 ## JWT(options)
-Constructor 
+Constructor
+
+Available options:
+- signingAllowed - Is signing allowed - must be "req", "opt", or "never"
+- encryptionAllowed - Is signing allowed - must be "req", "opt", or "never"
+
+### Validators
+
+An uberether-object-validator compatible validator or schema may be provided to validate signing headers, encryption headers, and claims.  For any not provided, a new validator is generated using the default schema: ```{ skip: true }```
+- signingHeaderSchema - A validator object OR a schema to generate one - used to validate signing headers
+- encryptionHeaderSchema - A validator object OR a schema to generate one - used to validate encryption headers
+- claimsSchema - A validator object OR a schema to generate one - used to validate claims
 
 ### Keystores
 There are 2 keystores used by the alogrithm - a public and a private one.  The public keystore is used to verify signatures and encrypt data (both public key operations).  The private keystore is used to sign and decrypt (both private key operations).
@@ -46,10 +57,9 @@ Configuration options to control these:
 	- pvtJwkOptions - If JWK is not specified, a new instance of uberether-jwk is initialized wit these options
 	- If neither of these are set, the public JWK is used
  
-### Verification Options
-
-- signingRequired - Set to "req", "opt", or "never" - default is "req"
-- encryptionRequired - Set to "req", "opt", or "never" - default is "never"
+- jwk - An instance of uberether-jwk to use for processing
+- jwkOptions - If specified the options passed to the uberether-jwk to construct the keystore
+- pvt
 
 
 ### Methods

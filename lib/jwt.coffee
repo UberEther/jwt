@@ -11,26 +11,18 @@ legalAllowedValues = ["req", "opt", "never"]
 
 class JWT
     constructor: (options = {}) ->
-        if !options.schema then throw new Error "options.schema is required"
-
         @signingAllowed = options.signingAllowed || "req"
         @encryptionAllowed = options.encryptionAllowed || "never"
         if legalAllowedValues.indexOf(@signingAllowed) == -1 then throw new Error "Illegal value for signingAllowed"
         if legalAllowedValues.indexOf(@encryptionAllowed) == -1 then throw new Error "Illegal value for encryptionAllowed"
         if @signingAllowed == "never" && @encryptionAllowed == "never" then throw new Error "Cannot specify never for both signing and encryption"
 
-        # Note: istanbul is reporting these lines as uncovered BUT everything I can do says they are covered
-        # Not sure what is going on here...
-        if @signingAllowed != "never" && !options.schema.signingHeader then throw new Error "options.schema.signingHeader is required"
-        if @encryptionAllowed != "never" && !options.schema.encryptionHeader then throw new Error "options.schema.encryptionHeader is required"
-        if !options.schema then throw new Error "options.schema.claims is required"
-
         @jwk = options.jwk || new JWT.JWK options.jwkOptions
         @pvtJwk = options.pvtJwk || (options.pvtJwkOptions && new JWT.JWK options.pvtJwkOptions) || @jwk
 
-        @signingHeaderValidator = options.signingHeaderValidator || JWT.generateValidator options.signingHeaderSchema || { skip: true }
-        @encryptionHeaderValidator = options.encryptionHeaderValidator || JWT.generateValidator options.encryptionHeaderSchema || { skip: true }
-        @claimsValidator = options.claimsValidator || JWT.generateValidator options.claimsSchema || { skip: true }
+        @signingHeaderValidator = JWT.generateValidator options.signingHeaderSchema || { skip: true }
+        @encryptionHeaderValidator = JWT.generateValidator options.encryptionHeaderSchema || { skip: true }
+        @claimsValidator = JWT.generateValidator options.claimsSchema || { skip: true }
 
     ##################################
     ### Token Parsing
