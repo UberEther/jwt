@@ -1,6 +1,6 @@
 Promise = require "bluebird"
 _JWK = require "uberether-jwk"
-_Validator = require "./validator"
+_generateValidator = require "./generateValidator"
 
 legalAllowedValues = ["req", "opt", "never"]
 
@@ -23,9 +23,9 @@ class JWT
         @jwk = options.jwk || new JWT.JWK options.jwkOptions
         @pvtJwk = options.pvtJwk || (options.pvtJwkOptions && new JWT.JWK options.pvtJwkOptions) || @jwk
 
-        @validator = options.validator || new JWT.Validator options.schema
-
-
+        @signingHeaderValidator = options.signingHeaderValidator || JWT.generateValidator options.signingHeaderSchema || { skip: true }
+        @encryptionHeaderValidator = options.encryptionHeaderValidator || JWT.generateValidator options.encryptionHeaderSchema || { skip: true }
+        @claimsValidator = options.claimsValidator || JWT.generateValidator options.claimsSchema || { skip: true }
 
     ##################################
     ### Token Parsing
@@ -36,7 +36,7 @@ class JWT
         Promise.bind @
         .then () -> @jwk.verifySignatureAsync token
         .then (x) ->
-            rv.signingHeader = @validator.validate "signingHeader", x.header
+            rv.signingHeader = @signingHeaderValidator.parse x.header
             rv.rawVerifyResult = x
             return x.payload
 
@@ -45,7 +45,7 @@ class JWT
         Promise.bind @
         .then () -> @pvtJwk.decryptAsync token
         .then (x) ->
-            rv.encryptionHeader = @validator.validate "encryptionHeader", x.header
+            rv.encryptionHeader = @encryptionHeaderValidator.parse x.header
             rv.rawDecryptResult = x
 
             if rv.encryptionHeader.cty?.toUpperCase() == "JWT" then @verifyAsync x.plaintext.toString("utf8"), rv
@@ -65,7 +65,7 @@ class JWT
             if @encryptionAllowed == "req" && !rv.encryptionHeader then throw new Error "Token not encrypted"
 
             claims = JSON.parse payload.toString "utf8"
-            rv.claims = @validator.validate "claims", claims
+            rv.claims = @claimsValidator.parse claims
 
             return rv
 
@@ -81,7 +81,7 @@ class JWT
         if @encryptionAllowed == "never" && options.encryptionKey then throw new Error "Encryption key not allowed"
 
         rv = {}
-        Promise.bind @, JSON.stringify @validator.generate "claims", claims
+        Promise.bind @, JSON.stringify @claimsValidator.export claims
         .then (payload) ->
             return payload if !options.signingKey
             rv.signingOptions = @generateSigningOptions options
@@ -99,14 +99,14 @@ class JWT
         # todo: IMPLEMENT ME
         return {
             format: "compact"
-            fields: @validator.generate "signingHeader", options.signingHeader || {}
+            fields: @signingHeaderValidator.export options.signingHeader || {}
         }
 
     generateEncryptionOptions: (options) ->
         # todo: IMPLEMENT ME
         rv = {
             format: "compact"
-            fields: @validator.generate "signingHeader", options.signingHeader || {}
+            fields: @encryptionHeaderValidator.export options.signingHeader || {}
         }
 
         if options.signingKey then rv.fields.cty = "JWT"
@@ -116,6 +116,6 @@ class JWT
 
 
 JWT.JWK = _JWK
-JWT.Validator = _Validator
+JWT.generateValidator = _generateValidator
 
 module.exports = JWT
