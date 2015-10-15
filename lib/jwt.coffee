@@ -20,9 +20,9 @@ class JWT
         @jwk = options.jwk || new JWT.JWK options.jwkOptions
         @pvtJwk = options.pvtJwk || (options.pvtJwkOptions && new JWT.JWK options.pvtJwkOptions) || @jwk
 
-        @signingHeaderValidator = JWT.generateValidator options.signingHeaderSchema || { skip: true }
-        @encryptionHeaderValidator = JWT.generateValidator options.encryptionHeaderSchema || { skip: true }
-        @claimsValidator = JWT.generateValidator options.claimsSchema || { skip: true }
+        @signingHeaderValidator = options.signingHeaderValidator || JWT.generateValidator options.signingHeaderSchema || { skip: true }
+        @encryptionHeaderValidator = options.encryptionHeaderValidator || JWT.generateValidator options.encryptionHeaderSchema || { skip: true }
+        @claimsValidator = options.claimsValidator || JWT.generateValidator options.claimsSchema || { skip: true }
 
     ##################################
     ### Token Parsing
