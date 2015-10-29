@@ -25,7 +25,7 @@ Asynchronous methods are based on [Bluebird](https://github.com/petkaantonov/blu
 
 # APIs:
 
-## JWT.JWK 
+## JWT.JWKS 
 the instance of uberether-jwk used by the JWT library.
 
 ## JWT(options)
@@ -45,20 +45,20 @@ An uberether-object-validator compatible validator or schema may be provided to 
 ### Keystores
 There are 2 keystores used by the alogrithm - a public and a private one.  The public keystore is used to verify signatures and encrypt data (both public key operations).  The private keystore is used to sign and decrypt (both private key operations).
 
-The same or different JWK objects may be used for each.
+The same or different JWKS objects may be used for each.
 
 Configuration options to control these:
-- Public JWK:
-	- jwk - JWK object to use - must be an instance of uberether-jwk (or compatible)
-	- jwkOptions - If JWK is not specified, a new instance of uberether-jwk is initialized wit these options
+- Public JWKS:
+	- jwks - JWKS object to use - must be an instance of uberether-jwk (or compatible)
+	- jwksOptions - If JWKS is not specified, a new instance of uberether-jwk is initialized wit these options
 	- If neither of these are set, a new keystore with no configuration is used
-- Private JWK:
-	- pvtJwk - JWK object to use - must be an instance of uberether-jwk (or compatible)
-	- pvtJwkOptions - If JWK is not specified, a new instance of uberether-jwk is initialized wit these options
-	- If neither of these are set, the public JWK is used
+- Private JWKS:
+	- pvtJwks - JWKS object to use - must be an instance of uberether-jwk (or compatible)
+	- pvtJwksOptions - If JWKS is not specified, a new instance of uberether-jwk is initialized wit these options
+	- If neither of these are set, the public JWKS is used
  
-- jwk - An instance of uberether-jwk to use for processing
-- jwkOptions - If specified the options passed to the uberether-jwk to construct the keystore
+- jwks - An instance of uberether-jwk to use for processing
+- jwksOptions - If specified the options passed to the uberether-jwk to construct the keystore
 - pvt
 
 
@@ -67,7 +67,7 @@ Configuration options to control these:
 #### parseTokenAsync(token)
 Parses and validates the token passed in.
 - Throws exceptions if it fails to validate.
-- Keys are obtained from the JWK instance
+- Keys are obtained from the JWKS instance
 
 The method returns a promise that resolves to an object containing:
 - signingHeader - If the claim was signed, this will be an object with the JWS header

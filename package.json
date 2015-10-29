@@ -1,6 +1,6 @@
 {
   "name": "uberether-jwt",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Class for generating, parsing, and validating JWT tokens",
   "main": "lib",
   "repository": {
@@ -22,9 +22,9 @@
     "test-cov": "istanbul cover --config test/istanbul.yml node_modules/mocha/bin/_mocha"
   },
   "dependencies": {
-    "bluebird": "^2.9.13",
+    "bluebird": "^3.0.0",
     "coffee-script": "^1.9.2",
-    "uberether-jwk": "^0.3.0",
+    "uberether-jwk": "^0.4.0",
     "uberether-object-validator": "^0.1.0"
   },
 
@@ -32,7 +32,7 @@
     "mocha": "^2.3.0",
     "chai": "^3.2.0",
     "rewire": "^2.3.4",
-    "istanbul": "^0.3.5",
+    "istanbul": "^0.4.0",
     "coffee-coverage": "^0.6.3"
   }
 }

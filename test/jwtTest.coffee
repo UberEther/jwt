@@ -3,7 +3,7 @@ JWT = require "../lib"
 
 describe "JWT", () ->
 
-    jwk = new JWT.JWK jwk: keys: [
+    jwks = new JWT.JWKS jwks: keys: [
         kty: "EC"
         kid: "testKey1"
         crv: "P-256"
@@ -12,7 +12,7 @@ describe "JWT", () ->
         d: "dI5TRpZrVLpTr_xxYK-n8FgTBpe5Uer-8QgHu5gx9Ds"
     ]
 
-    pubJwk = new JWT.JWK jwk: keys: [
+    pubJwks = new JWT.JWKS jwks: keys: [
         kty: "EC"
         kid: "testKey1"
         crv: "P-256"
@@ -22,7 +22,7 @@ describe "JWT", () ->
 
     describe "Should round-trip", () ->
         it "sign and encrypt", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "req"
+            t = new JWT jwks: jwks, signingAllowed: "req", encryptionAllowed: "req"
             claims = test: "ABCDE"
             t.generateTokenAsync claims,
                 signingKey: "testKey1"
@@ -45,7 +45,7 @@ describe "JWT", () ->
             .catch done
 
         it "sign only", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "never"
+            t = new JWT jwks: jwks, signingAllowed: "req", encryptionAllowed: "never"
             claims = test: "ABCDE"
             t.generateTokenAsync claims,
                 signingKey: "testKey1"
@@ -66,7 +66,7 @@ describe "JWT", () ->
             .catch done
 
         it "encrypt only", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "never", encryptionAllowed: "req"
+            t = new JWT jwks: jwks, signingAllowed: "never", encryptionAllowed: "req"
             claims = test: "ABCDE"
             t.generateTokenAsync claims,
                 encryptionKey: "testKey1"
@@ -89,7 +89,7 @@ describe "JWT", () ->
     describe "constructor options", () ->
         it "should default correctly", () ->
             t = new JWT 
-            expect(t.jwk).to.equal(t.pvtJwk)
+            expect(t.jwks).to.equal(t.pvtJwks)
             expect(t.signingAllowed).to.equal("req")
             expect(t.encryptionAllowed).to.equal("never")
 
@@ -117,8 +117,8 @@ describe "JWT", () ->
             .to.throw "Token encrypted but encryption not allowed"
 
         it "should fail if unencrypted token is parsed when encryption required", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "opt"
-            t2 = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "req"
+            t = new JWT jwks: jwks, signingAllowed: "req", encryptionAllowed: "opt"
+            t2 = new JWT jwks: jwks, signingAllowed: "req", encryptionAllowed: "req"
 
             claims = test: "ABCDE"
             t.generateTokenAsync claims, signingKey: "testKey1"
@@ -129,8 +129,8 @@ describe "JWT", () ->
                 else done err
 
         it "should fail if unsigned token is parsed when signature required", (done) ->
-            t = new JWT jwk: jwk, signingAllowed: "opt", encryptionAllowed: "req"
-            t2 = new JWT jwk: jwk, signingAllowed: "req", encryptionAllowed: "req"
+            t = new JWT jwks: jwks, signingAllowed: "opt", encryptionAllowed: "req"
+            t2 = new JWT jwks: jwks, signingAllowed: "req", encryptionAllowed: "req"
 
             claims = test: "ABCDE"
             t.generateTokenAsync claims, encryptionKey: "testKey1"
@@ -161,7 +161,7 @@ describe "JWT", () ->
         .to.throw "Encryption key not allowed"
 
     it "should properly use separate public and private keystores", (done) ->
-        t = new JWT jwk: pubJwk, pvtJwk: jwk, signingAllowed: "req", encryptionAllowed: "req"
+        t = new JWT jwks: pubJwks, pvtJwks: jwks, signingAllowed: "req", encryptionAllowed: "req"
         claims = test: "ABCDE"
         t.generateTokenAsync claims,
             signingKey: "testKey1"

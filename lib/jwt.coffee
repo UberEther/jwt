@@ -1,5 +1,5 @@
 Promise = require "bluebird"
-_JWK = require "uberether-jwk"
+_JWKS = require "uberether-jwk"
 registerDefaultFieldTypes = require "./registerDefaultFieldTypes"
 _generateValidator = require "uberether-object-validator"
 
@@ -17,8 +17,8 @@ class JWT
         if legalAllowedValues.indexOf(@encryptionAllowed) == -1 then throw new Error "Illegal value for encryptionAllowed"
         if @signingAllowed == "never" && @encryptionAllowed == "never" then throw new Error "Cannot specify never for both signing and encryption"
 
-        @jwk = options.jwk || new JWT.JWK options.jwkOptions
-        @pvtJwk = options.pvtJwk || (options.pvtJwkOptions && new JWT.JWK options.pvtJwkOptions) || @jwk
+        @jwks = options.jwks || new JWT.JWKS options.jwksOptions
+        @pvtJwks = options.pvtJwks || (options.pvtJwksOptions && new JWT.JWKS options.pvtJwksOptions) || @jwks
 
         @signingHeaderValidator = options.signingHeaderValidator || JWT.generateValidator options.signingHeaderSchema || { skip: true }
         @encryptionHeaderValidator = options.encryptionHeaderValidator || JWT.generateValidator options.encryptionHeaderSchema || { skip: true }
@@ -31,7 +31,7 @@ class JWT
     verifyAsync: (token, rv) ->
         if @signingAllowed == "never" then throw new Error "Token signed but signing not allowed"
         Promise.bind @
-        .then () -> @jwk.verifySignatureAsync token
+        .then () -> @jwks.verifySignatureAsync token
         .then (x) ->
             rv.signingHeader = @signingHeaderValidator.parse x.header
             rv.rawVerifyResult = x
@@ -40,7 +40,7 @@ class JWT
     decryptAsync: (token, rv) ->
         if @encryptionAllowed == "never" then throw new Error "Token encrypted but encryption not allowed"
         Promise.bind @
-        .then () -> @pvtJwk.decryptAsync token
+        .then () -> @pvtJwks.decryptAsync token
         .then (x) ->
             rv.encryptionHeader = @encryptionHeaderValidator.parse x.header
             rv.rawDecryptResult = x
@@ -82,12 +82,12 @@ class JWT
         .then (payload) ->
             return payload if !options.signingKey
             rv.signingOptions = @generateSigningOptions options
-            @pvtJwk.signAsync options.signingKey, payload, rv.signingOptions
+            @pvtJwks.signAsync options.signingKey, payload, rv.signingOptions
         .then (payload) ->
             return payload if !options.encryptionKey
             
             rv.encryptionOptions = @generateEncryptionOptions options
-            @jwk.encryptAsync options.encryptionKey, payload, rv.encryptionOptions
+            @jwks.encryptAsync options.encryptionKey, payload, rv.encryptionOptions
         .then (payload) ->
             rv.token = payload
             return rv
@@ -110,9 +110,7 @@ class JWT
 
         return rv
 
-
-
-JWT.JWK = _JWK
+JWT.JWKS = _JWKS
 JWT.generateValidator = _generateValidator
 
 module.exports = JWT
